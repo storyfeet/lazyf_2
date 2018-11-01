@@ -76,6 +76,10 @@ impl FromStr for LzList{
     }
 }
 
+impl Getable for LzList{
+    //TODO
+}
+
 
 #[cfg(test)]
 mod test{

@@ -2,7 +2,7 @@ mod lz_err;
 mod lz_list;
 mod get;
 use get::Getable;
-mod brace;
+mod env;
 use lz_err::LzErr;
 use std::io::Read;
 use std::str::FromStr;
@@ -29,25 +29,10 @@ pub trait Loader:Sized {
 }
 
 pub fn config(c_loc_flag:&str,)->GetHolder{
-    GetHolder{v:Vec::new()}
+    let v = Vec::new();
+    //TODO
+    GetHolder{v}
 }
-
-pub enum GetMode{
-    Flag,
-    Lz,
-}
-
-#[derive(Clone,Copy)]
-pub enum Getter{
-}
-pub struct GetHolder {    
-    v:Vec<(GetMode,Box<Getable>)>,
-}
-
-pub struct Grabber<'a>{ //get builder
-    v:Vec<(GetMode,&'a str)>
-}
-
 
 
 
