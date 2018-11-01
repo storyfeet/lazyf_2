@@ -1,5 +1,5 @@
 [package]
-name = "lz2"
+name = "lazy_conf"
 version = "0.1.0"
 authors = ["storyfeet <thebeaky@psmail.net>"]
 

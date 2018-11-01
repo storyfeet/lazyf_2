@@ -1,3 +1,4 @@
+
 use lz_err::LzErr;
 use std::str::FromStr;
 
@@ -9,11 +10,52 @@ pub trait Getable{
 pub enum Getter{
 }
 
-
 pub struct GetHolder {    
     pub v:Vec<(GetMode,Box<Getable>)>,
 }
 
+
+/// The GetHolder does the work of maintaining a list of Getables, and
+/// prioritizing user requests.
+///
+/// Normally you will not instantiate this directly, prefering to use the 
+/// ``` config() ``` method to create it.
+///
+/// However it can be instatiated to use anything that implements Getable
+/// (from this module)
+///
+/// For example
+///
+///
+///
+/// ```
+/// use lazy_conf::{Getable,GetHolder,GetMode};
+/// use std::collections::BTreeMap;
+/// 
+/// struct GetTester(BTreeMap<String,String>);
+///
+/// impl Getable for GetTester{
+///   fn get(&self,s:&str)->Option<String>{
+///       self.0.get(s).map(|s|s.to_string())
+///    }
+/// }
+///
+/// let mut g = GetHolder::new();
+/// let mut t1 = BTreeMap::new();
+/// t1.insert("a".to_string(),"a_t1_res".to_string());
+/// let mut t2 = BTreeMap::new();
+/// t2.insert("a".to_string(),"a_t2_res".to_string());
+/// t2.insert("num".to_string(),"4".to_string());
+/// g.add(GetMode::Lz,GetTester(t1));
+/// g.add(GetMode::Flag,GetTester(t2));
+///
+/// assert_eq!(&g.grab().lz("a").fg("a").s().unwrap(),"a_t1_res");
+/// assert_eq!(&g.grab().fg("a").lz("a").s().unwrap(),"a_t2_res");
+/// assert_eq!(g.grab().lz("num").fg("num").t::<i32>().unwrap(),4);
+/// assert!(g.grab().s().is_none());
+/// assert!(g.grab().fg("b").lz("b").s().is_none());
+///
+/// ```
 impl GetHolder{
     pub fn new()->Self{
         GetHolder{v:Vec::new()}
@@ -84,3 +126,36 @@ pub enum GetMode{
     Lz,
 }
 
+
+#[cfg(test)]
+mod test{
+    use super::*;
+    use std::collections::BTreeMap;
+    
+    struct GetTester(BTreeMap<String,String>);
+
+    impl Getable for GetTester{
+        fn get(&self,s:&str)->Option<String>{
+            self.0.get(s).map(|s|s.to_string())
+        }
+    }
+
+
+    #[test]
+    fn grab_test(){
+        let mut g = GetHolder::new();
+        let mut t1 = BTreeMap::new();
+        t1.insert("a".to_string(),"a_t1_res".to_string());
+        let mut t2 = BTreeMap::new();
+        t2.insert("a".to_string(),"a_t2_res".to_string());
+        t2.insert("num".to_string(),"4".to_string());
+        g.add(GetMode::Lz,GetTester(t1));
+        g.add(GetMode::Flag,GetTester(t2));
+
+        assert_eq!(&g.grab().lz("a").fg("a").s().unwrap(),"a_t1_res");
+        assert_eq!(&g.grab().fg("a").lz("a").s().unwrap(),"a_t2_res");
+        assert_eq!(g.grab().lz("num").fg("num").t::<i32>().unwrap(),4);
+        assert!(g.grab().s().is_none());
+        assert!(g.grab().fg("b").lz("b").s().is_none());
+    }
+}

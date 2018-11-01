@@ -1,3 +1,71 @@
+//! The Primary purpose of this module is to provide a super quick
+//! way of accessing and prioritizing the three main configuration options:
+//! * Arguments as Flags
+//! * Environment Variables
+//! * Configuration Files
+//!
+//! For configuration files I use the lazyf format, which is
+//! straight forward to use:
+//!
+//! ```ignore
+//! Superman:
+//!     power:fly
+//!     home:Kansas
+//!
+//! #comment
+//!
+//! Batman:
+//!     power:money
+//!     home:Gotham
+//! ```
+//!
+//! The structure is only 2 layers deep, and uses any whitespace to
+//! indicate that this row is a child or the previous untabbed row.
+//! 
+//! The intended use of the program is as follows Assuming the previous
+//! file is in one of the supplied locations.
+//!
+//! ```rust,no_run
+//!
+//! use lazy_conf::config;
+//! let cfg = config("-c",&["conf.lz","{HOME}/.config/myprogram.lz"]);
+//! let spower = cfg.grab()
+//!                 .lz("Superman.power") 
+//!                 .fg("-sppower")
+//!                 .env("SUPERMAN_POWER").s();
+//!
+//! assert_eq!(spower,Some("fly".to_string()));
+//!
+//! ```
+//!
+//! Items are searched in the order you choose, so if you would
+//! rather prioritize the flag result, put ```.fg(...)``` first. 
+//! You can also supply two lz places to try.
+//! ```rust,ignore
+//! let spower = cfg.grab()
+//!                 .lz("Superman.power") 
+//!                 .lz("Batman.power").s()
+//! ```
+//!
+//! will return Some("money") if supermans is not supplied.
+//!
+//! ```rust,ignore
+//! let cfg = config("-c",[loc1,loc2,loc3,etc]);
+//! ```
+//! The given flag ("-c") should refer to a path
+//!
+//! ```ignore
+//! myprogram -c localconf.lz
+//! ```
+//!
+//! Whether or not this flag is supplied, the program will attempt to
+//! load all files, and when an lz request is made, it will search them
+//! all (preloaded) in order "-c", "loc1" ,"loc2", ...
+//!
+//!
+//!
+//!
+
 mod lz_err;
 mod lz_list;
 mod get;
