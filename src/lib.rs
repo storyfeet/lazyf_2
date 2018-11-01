@@ -1,9 +1,15 @@
 mod lz_err;
 mod lz_list;
 mod get;
-pub use get::{Getable,GetHolder};
 mod env;
+mod flag;
+
+pub use get::{Getable,GetHolder,GetMode};
 use lz_err::LzErr;
+use flag::FlagGetter;
+pub use lz_list::{LzList,Lz};
+use env::EnvGetter;
+
 use std::io::Read;
 use std::str::FromStr;
 use std::fs::File;
@@ -28,17 +34,29 @@ pub trait Loader:Sized {
     }
 }
 
-pub fn config(c_loc_flag:&str,)->GetHolder{
-    let v = Vec::new();
+pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
+    where I:IntoIterator<Item=S>,
+          S:AsRef<Path>,
+{
+    let mut res = GetHolder::new();
+    let fg = FlagGetter();
 
-    GetHolder{v}
-}
-
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
+    if let Some(s) = fg.get(c_loc_flag){
+        if let Ok(l) = LzList::load(s){
+            res.add(GetMode::Lz,l);
+        }
     }
+
+    //after load, as consumed but before rest of things as flags often come first
+    res.add(GetMode::Flag,fg);
+    res.add(GetMode::Env,EnvGetter());
+
+    for fname in c_locs{
+        if let Ok(l) = LzList::load(fname){
+            res.add(GetMode::Lz,l);
+        }
+    }
+    res
 }
+
+
