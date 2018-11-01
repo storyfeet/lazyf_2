@@ -1,7 +1,7 @@
 mod lz_err;
 mod lz_list;
 mod get;
-use get::Getable;
+pub use get::{Getable,GetHolder};
 mod env;
 use lz_err::LzErr;
 use std::io::Read;
@@ -30,7 +30,7 @@ pub trait Loader:Sized {
 
 pub fn config(c_loc_flag:&str,)->GetHolder{
     let v = Vec::new();
-    //TODO
+
     GetHolder{v}
 }
 

@@ -1,7 +1,8 @@
 
 #[derive(Debug)]
 pub enum LzErr{
-    ParseErr(usize),
+    ParseErr,
+    ParseErrAt(usize),
     LoadErr,
     NotFound,
     EnvVarErr,

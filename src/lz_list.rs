@@ -58,8 +58,8 @@ impl FromStr for LzList{
                 }
 
                 match curr{
-                    Some(ref mut curr)=>curr.add_deet_str(l).map_err(|_|LzErr::ParseErr(i))?,
-                    None=>return Err(LzErr::ParseErr(i)),
+                    Some(ref mut curr)=>curr.add_deet_str(l).map_err(|_|LzErr::ParseErrAt(i))?,
+                    None=>return Err(LzErr::ParseErrAt(i)),
                 }
 
                 continue;
@@ -76,8 +76,29 @@ impl FromStr for LzList{
     }
 }
 
+impl Getable for Lz{
+    fn get(&self,s:&str)->Option<String>{
+        self.deets.get(s).map(|s|s.to_string())
+    }
+}
+
 impl Getable for LzList{
-    //TODO
+    fn get(&self,s:&str)->Option<String>{
+        let sp:Vec<&str> = s.split(".").collect();
+        match sp.len(){
+            0=>return None,
+            1=>self.items.get(0)?.get(sp[0]),
+            _=>{
+                for i in &self.items{
+                    if i.name == sp[0]{
+                        return i.get(sp[1]);
+                    }
+                }
+                //CONSIDER passing remaining dots maybe even a dotgetter trait
+                None
+            },
+        }
+    }
 }
 
 

@@ -6,8 +6,8 @@ use get::Getable;
 pub struct EnvGetter();
 
 impl Getable for EnvGetter{
-    pub fn GetEnv(&self,s:&str)->Option<String>{
-        env::var().ok()
+    fn get(&self,s:&str)->Option<String>{
+        env::var(s).ok()
     }
 }
 
