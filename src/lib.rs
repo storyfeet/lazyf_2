@@ -28,13 +28,21 @@
 //! ```rust,no_run
 //!
 //! use lazy_conf::config;
-//! let cfg = config("-c",&["conf.lz","{HOME}/.config/myprogram.lz"]);
+//!
+//! // note mut so help messages can be added
+//! let mut cfg = config("-c",&["conf.lz","{HOME}/.config/myprogram.lz"]);
 //! let spower = cfg.grab()
 //!                 .lz("Superman.power") 
 //!                 .fg("-sppower")
-//!                 .env("SUPERMAN_POWER").s();
+//!                 .env("SUPERMAN_POWER").help("What power").s();
 //!
 //! assert_eq!(spower,Some("fly".to_string()));
+//!
+//! if cfg.help("A Program to collect Superpowers") {
+//!     // if flag --help existed, cfg prints collated help messages,
+//!     // and returns true
+//!     return;
+//! }
 //!
 //! ```
 //!

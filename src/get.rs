@@ -4,6 +4,10 @@ use std::str::FromStr;
 
 pub trait Getable{
     fn get(&self,&str)->Option<String>;
+    /// Present exists to make it possible to check if a non key-value flag like "--help" is marked
+    fn is_present(&self,s:&str)->bool{
+        self.get(s).is_some()
+    }
 }
 
 #[derive(Clone,Copy)]
@@ -12,6 +16,7 @@ pub enum Getter{
 
 pub struct GetHolder {    
     pub v:Vec<(GetMode,Box<Getable>)>,
+    pub help_mess:String,
 }
 
 
@@ -58,17 +63,17 @@ pub struct GetHolder {
 /// ```
 impl GetHolder{
     pub fn new()->Self{
-        GetHolder{v:Vec::new()}
+        GetHolder{v:Vec::new(),help_mess:String::new()}
     }
 
     pub fn add<T:'static+Getable>(&mut self,g:GetMode,gt:T){
         self.v.push((g,Box::new(gt)));
     }
 
-    pub fn grab<'a>(&'a self)->Grabber<'a>{ 
+    pub fn grab<'a>(&'a mut self)->Grabber<'a>{ 
         Grabber{
             v:Vec::new(),
-            h:&self,
+            h:self,
         }
     }
     pub fn get(&self,g:GetMode,s:&str)->Option<String>{
@@ -81,11 +86,41 @@ impl GetHolder{
         }
         None
     }
+
+    pub fn is_present(&self,g:GetMode,s:&str)->bool{
+        for (gm,v) in &self.v{
+            if *gm == g{
+                if v.is_present(s){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    pub fn add_help(&mut self,mess:&str){
+        self.help_mess.push_str(mess);
+        self.help_mess.push('\n');//CONSIDER windows at some point
+    }
+
+    pub fn print_help(&self,mess:&str){
+        println!("{}",mess);
+        println!("{}",self.help_mess);
+    }
+
+    /// Checks for a --help flag, and prints the built up help message to stdout, returns true if
+    pub fn help(&self,mess:&str)->bool{
+        if self.is_present(GetMode::Flag,"--help"){
+            self.print_help(mess);
+            return true;
+        }
+        false
+    }
 }
 
 pub struct Grabber<'a>{ //get builder
     v:Vec<(GetMode,&'a str)>,
-    h:&'a GetHolder,
+    h:&'a mut GetHolder,
 }
 
 impl<'a> Grabber<'a>{
@@ -103,6 +138,15 @@ impl<'a> Grabber<'a>{
         self
     }
 
+    pub fn is_present(self)->bool{
+        for (m,st) in self.v{
+            if self.h.is_present(m,st){
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn s(self)->Option<String>{
         for (m,st) in self.v{
             if let Some(v)=  self.h.get(m,st){
@@ -115,11 +159,19 @@ impl<'a> Grabber<'a>{
     pub fn t<T:FromStr>(self)->Result<T,LzErr>{
         let s = self.s().ok_or(LzErr::NotFound)?;
         s.parse().map_err(|_|LzErr::ParseErr)
+    }
 
+    pub fn help(self,mess:&str)->Self{
+        let mut s = format!("\t{}\n",mess );
+        for (m,v) in &self.v{
+            s.push_str(&format!("\t{:?}:{},",m,v));
+        }
+
+        self
     }
 }
 
-#[derive(PartialEq,Clone,Copy)]
+#[derive(Debug,PartialEq,Clone,Copy)]
 pub enum GetMode{
     Flag,
     Env,

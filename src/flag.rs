@@ -16,6 +16,10 @@ impl Getable for FlagGetter{
     fn get(&self,s:&str)->Option<String>{
         _it_flag(env::args(),s)
     }
+    
+    fn is_present(&self,s:&str)->bool{
+        env::args().find(|v|v==s).is_some()
+    }
 }
 
 #[cfg(test)]
