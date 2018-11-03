@@ -51,14 +51,14 @@ pub struct GetHolder {
 /// let mut t2 = BTreeMap::new();
 /// t2.insert("a".to_string(),"a_t2_res".to_string());
 /// t2.insert("num".to_string(),"4".to_string());
-/// g.add(GetMode::Lz,GetTester(t1));
+/// g.add(GetMode::Conf,GetTester(t1));
 /// g.add(GetMode::Flag,GetTester(t2));
 ///
-/// assert_eq!(&g.grab().lz("a").fg("a").s().unwrap(),"a_t1_res");
-/// assert_eq!(&g.grab().fg("a").lz("a").s().unwrap(),"a_t2_res");
-/// assert_eq!(g.grab().lz("num").fg("num").t::<i32>().unwrap(),4);
+/// assert_eq!(&g.grab().cf("a").fg("a").s().unwrap(),"a_t1_res");
+/// assert_eq!(&g.grab().fg("a").cf("a").s().unwrap(),"a_t2_res");
+/// assert_eq!(g.grab().cf("num").fg("num").t::<i32>().unwrap(),4);
 /// assert!(g.grab().s().is_none());
-/// assert!(g.grab().fg("b").lz("b").s().is_none());
+/// assert!(g.grab().fg("b").cf("b").s().is_none());
 ///
 /// ```
 impl GetHolder{
@@ -103,15 +103,14 @@ impl GetHolder{
         self.help_mess.push('\n');//CONSIDER windows at some point
     }
 
-    pub fn print_help(&self,mess:&str){
-        println!("{}",mess);
-        println!("{}",self.help_mess);
+    pub fn help_string(&self,mess:&str)->String{
+        format!("{}\n{}\n",mess,self.help_mess)
     }
 
     /// Checks for a --help flag, and prints the built up help message to stdout, returns true if
     pub fn help(&self,mess:&str)->bool{
         if self.is_present(GetMode::Flag,"--help"){
-            self.print_help(mess);
+            println!("{}",self.help_string(mess));
             return true;
         }
         false
@@ -127,8 +126,8 @@ impl<'a> Grabber<'a>{
     pub fn env(self,s:&'a str)->Self{
         self.gm(GetMode::Env,s)
     }
-    pub fn lz(self,s:&'a str)->Self{
-        self.gm(GetMode::Lz,s)
+    pub fn cf(self,s:&'a str)->Self{
+        self.gm(GetMode::Conf,s)
     }
     pub fn fg(self,s:&'a str)->Self{
         self.gm(GetMode::Flag,s)
@@ -162,10 +161,11 @@ impl<'a> Grabber<'a>{
     }
 
     pub fn help(self,mess:&str)->Self{
-        let mut s = format!("\t{}\n",mess );
+        let mut s = format!("{}:\n",mess );
         for (m,v) in &self.v{
             s.push_str(&format!("\t{:?}:{},",m,v));
         }
+        self.h.add_help(&s);
 
         self
     }
@@ -175,7 +175,7 @@ impl<'a> Grabber<'a>{
 pub enum GetMode{
     Flag,
     Env,
-    Lz,
+    Conf,
 }
 
 
@@ -201,13 +201,13 @@ mod test{
         let mut t2 = BTreeMap::new();
         t2.insert("a".to_string(),"a_t2_res".to_string());
         t2.insert("num".to_string(),"4".to_string());
-        g.add(GetMode::Lz,GetTester(t1));
+        g.add(GetMode::Conf,GetTester(t1));
         g.add(GetMode::Flag,GetTester(t2));
 
-        assert_eq!(&g.grab().lz("a").fg("a").s().unwrap(),"a_t1_res");
-        assert_eq!(&g.grab().fg("a").lz("a").s().unwrap(),"a_t2_res");
-        assert_eq!(g.grab().lz("num").fg("num").t::<i32>().unwrap(),4);
+        assert_eq!(&g.grab().cf("a").fg("a").s().unwrap(),"a_t1_res");
+        assert_eq!(&g.grab().fg("a").cf("a").s().unwrap(),"a_t2_res");
+        assert_eq!(g.grab().cf("num").fg("num").t::<i32>().unwrap(),4);
         assert!(g.grab().s().is_none());
-        assert!(g.grab().fg("b").lz("b").s().is_none());
+        assert!(g.grab().fg("b").cf("b").s().is_none());
     }
 }

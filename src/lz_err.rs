@@ -1,5 +1,5 @@
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum LzErr{
     ParseErr,
     ParseErrAt(usize),
