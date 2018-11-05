@@ -14,12 +14,6 @@ pub trait Getable{
 pub enum Getter{
 }
 
-pub struct GetHolder {    
-    pub v:Vec<(GetMode,Box<Getable>)>,
-    pub help_mess:String,
-}
-
-
 /// The GetHolder does the work of maintaining a list of Getables, and
 /// prioritizing user requests.
 ///
@@ -61,9 +55,16 @@ pub struct GetHolder {
 /// assert!(g.grab().fg("b").cf("b").s().is_none());
 ///
 /// ```
+pub struct GetHolder {    
+    pub v:Vec<(GetMode,Box<Getable>)>,
+    pub help_mess:String,
+    pub fails:String,
+}
+
+
 impl GetHolder{
     pub fn new()->Self{
-        GetHolder{v:Vec::new(),help_mess:String::new()}
+        GetHolder{v:Vec::new(),help_mess:String::new(),fails:String::new()}
     }
 
     pub fn add<T:'static+Getable>(&mut self,g:GetMode,gt:T){
@@ -76,6 +77,12 @@ impl GetHolder{
             h:self,
         }
     }
+
+    pub fn add_fail(&mut self,f_str:&str){
+        self.fails.push_str(f_str);
+        self.fails.push('\n');
+    }
+
     pub fn get(&self,g:GetMode,s:&str)->Option<String>{
         for (gm,v) in &self.v {
             if *gm == g {
@@ -104,6 +111,9 @@ impl GetHolder{
     }
 
     pub fn help_string(&self,mess:&str)->String{
+        if self.fails.len() > 0 {
+            return format!("{}\nMissing:\n{}\n{}",mess,self.fails,self.help_mess);
+        }
         format!("{}\n{}\n",mess,self.help_mess)
     }
 
@@ -146,29 +156,70 @@ impl<'a> Grabber<'a>{
         false
     }
 
-    pub fn s(self)->Option<String>{
-        for (m,st) in self.v{
-            if let Some(v)=  self.h.get(m,st){
+    fn _s(&self)->Option<String>{
+        for (m,st) in &self.v{
+            if let Some(v)=  self.h.get(*m,st){
                 return Some(v);
             }
         }
         None
     }
 
+    pub fn s(self)->Option<String>{
+        self._s()
+    }
+
+    pub fn s_req(self,mess:&str)->Option<String>{
+        let hs = &self.help_str(mess);
+        match self._s(){
+            Some(s)=>{
+                self.h.add_help(&hs);
+                Some(s)
+            },
+            None=>{
+                self.h.add_fail(&hs);
+                None
+            },
+        }
+    }
+
     pub fn t<T:FromStr>(self)->Result<T,LzErr>{
-        let s = self.s().ok_or(LzErr::NotFound)?;
+        let s = self._s().ok_or(LzErr::NotFound)?;
         s.parse().map_err(|_|LzErr::ParseErr)
     }
 
+    pub fn t_req<T:FromStr>(self,mess:&str)->Result<T,LzErr>{
+        let s = self._s()
+                .ok_or(LzErr::NotFound)
+                .and_then(|x|x.parse().map_err(|_|LzErr::ParseErr));
+        let hs = self.help_str(mess);
+
+        match s{
+            Ok(s)=>{
+                self.h.add_help(&hs);
+                Ok(s)
+            },
+            Err(e)=>{
+                self.h.add_fail(&hs);
+                Err(e) 
+            },
+        }
+    }
+
     pub fn help(self,mess:&str)->Self{
+        let hs = self.help_str(mess);
+        self.h.add_help(&hs);
+        self
+    }
+
+    pub fn help_str(&self,mess:&str)->String{
         let mut s = format!("{}:\n",mess );
         for (m,v) in &self.v{
             s.push_str(&format!("\t{:?}:{},",m,v));
         }
-        self.h.add_help(&s);
-
-        self
+        s
     }
+
 }
 
 #[derive(Debug,PartialEq,Clone,Copy)]
