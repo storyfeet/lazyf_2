@@ -123,6 +123,10 @@ impl GetHolder{
             println!("{}",self.help_string(mess));
             return true;
         }
+        if self.fails.len() >0 {
+            println!("{}",self.help_string(mess));
+            return true;
+        }
         false
     }
 }
