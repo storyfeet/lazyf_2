@@ -1,6 +1,7 @@
 [package]
 name = "lazy_conf"
-version = "0.1.0"
+version = "0.1.1"
+edition = "2018"
 authors = ["storyfeet <thebeaky@psmail.net>"]
 description = "A quick unified way to grab configuration options from * environment variables * program arguments * config files."
 keywords = ["conf","config","lazy","simple","lazyf"]

@@ -35,7 +35,10 @@
 //!
 //! // note: this has to be "mut" so help messages can be added
 //! // note: this will load the "test_data/powers" file described above
-//! let mut cfg = config("-c",&["test_data/powers.lz","{HOME}/.config/myprogram.lz"]);
+//! let mut cfg =
+//! config("-c",&["test_data/powers.lz","{HOME}/.config/myprogram.lz"])
+//!                 .unwrap();
+//!                 //only fails if -c was provided, but badly formed
 //!
 //!
 //! // Use grab builder to get the info out.
@@ -104,45 +107,27 @@
 //! all (preloaded) in order "-c", "loc1" ,"loc2", ...
 //!
 
+pub mod get;
+pub mod env;
 mod lz_err;
 mod lz_list;
-mod get;
-mod env;
 mod flag;
+mod loader;
 
 pub use get::{Getable,GetHolder,GetMode};
-use lz_err::LzErr;
-use flag::FlagGetter;
+pub use lz_err::LzErr;
+pub use flag::FlagGetter;
 pub use lz_list::{LzList,Lz};
-use env::EnvGetter;
+pub use env::EnvGetter;
+pub use loader::{load_local};
 
-use std::io::Read;
-use std::str::FromStr;
-use std::fs::File;
-use std::path::Path;
 use std::fmt::Debug;
 
-impl<T,E>Loader for T
-    where T:FromStr<Err=E>,
-        LzErr:From<E>, 
-{
-    fn read_into<R:Read>(mut r:R)->Result<Self,LzErr>{
-        let mut b = String::new();
-        r.read_to_string(&mut b)?;
-        Ok(T::from_str(&b)?)
-    }
-}
 
-pub trait Loader:Sized {
-    fn read_into<R:Read>(r:R)->Result<Self,LzErr>;
-    fn load<P:AsRef<Path>>(p:P)->Result<Self,LzErr>{
-        let f = File::open(p)?;
-        Self::read_into(f) 
-    }
-}
-
-//TODO make result return make sense
-pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
+/// create a config loader object, so each individual config item can be built up and help items
+/// can be added too.
+/// fails if user provided flag for c_loc_flag, but it was badly formed.
+pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->Result<GetHolder,LzErr>
     where I:IntoIterator<Item=S>+Debug,
           S:AsRef<str>,
 {
@@ -152,12 +137,10 @@ pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
     res.add_help(&format!("Config file location flag: \"{}\"\
                        \ndefault locations : {:?}",c_loc_flag,c_locs));
 
-    //TODO add ?
     if let Some(s) = fg.get(c_loc_flag){
-        if let Ok(s) = env::replace_env(&s){
-            if let Ok(l) = LzList::load(s){
-                res.add(GetMode::Conf,l);
-            }
+        let s = env::replace_env(&s)?;
+        if let Ok(l) = load_local::<LzList,_>(s){
+            res.add(GetMode::Conf,l);
         }
     }
 
@@ -168,12 +151,12 @@ pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
 
     for fname in c_locs{
         if let Ok(fname) = env::replace_env(fname.as_ref()){
-            if let Ok(l) = LzList::load(fname){
+            if let Ok(l) = load_local::<LzList,_>(fname){
                 res.add(GetMode::Conf,l);
             }
         }
     }
-    res
+    Ok(res)
 }
 
 

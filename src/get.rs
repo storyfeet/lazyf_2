@@ -1,12 +1,17 @@
 
 use lz_err::LzErr;
 use std::str::FromStr;
+use std::path::{PathBuf,Path};
 
 pub trait Getable{
     fn get(&self,&str)->Option<String>;
     /// Present exists to make it possible to check if a non key-value flag like "--help" is marked
     fn is_present(&self,s:&str)->bool{
         self.get(s).is_some()
+    }
+
+    fn localize(&self,p:&Path)->PathBuf{
+        PathBuf::from(p)
     }
 }
 
@@ -94,6 +99,16 @@ impl GetHolder{
         None
     }
 
+    pub fn get_local(&self,g:GetMode,s:&str)->Option<PathBuf>{
+        for (gm,v) in &self.v{
+            if *gm != g{continue}
+            if let Some(s) = v.get(s){
+                return Some(v.localize(s.as_ref()));
+            }
+        }
+        None
+    }
+
     pub fn is_present(&self,g:GetMode,s:&str)->bool{
         for (gm,v) in &self.v{
             if *gm == g{
@@ -171,6 +186,15 @@ impl<'a> Grabber<'a>{
 
     pub fn s(self)->Option<String>{
         self._s()
+    }
+
+    pub fn s_local(self)->Option<PathBuf>{
+        for (m,st) in &self.v{
+            if let Some(v)= self.h.get_local(*m,st){
+                return Some(v)
+            }
+        }
+        None
     }
 
     pub fn s_req(self,mess:&str)->Option<String>{
