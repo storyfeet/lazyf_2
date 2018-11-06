@@ -1,10 +1,10 @@
-use lz_err::LzErr;
+use crate::lz_err::LzErr;
+use crate::get::Getable;
 
 use std::fs::File;
 use std::str::FromStr;
 use std::io::Read;
 use std::path::{Path,PathBuf};
-use get::Getable;
 
 pub trait Loader:Sized {
     fn read_into<R:Read>(r:R)->Result<Self,LzErr>;

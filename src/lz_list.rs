@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
-use lz_err::LzErr;
-use get::Getable;
+use crate::lz_err::LzErr;
+use crate::get::Getable;
 
 #[derive(PartialEq,PartialOrd,Debug,Clone)]
 pub struct Lz {

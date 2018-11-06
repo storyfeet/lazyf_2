@@ -1,4 +1,4 @@
-use get::Getable;
+use crate::get::Getable;
 use std::env;
 
 pub struct FlagGetter();

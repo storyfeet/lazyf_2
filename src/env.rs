@@ -1,6 +1,7 @@
-use lz_err::LzErr;
+use crate::lz_err::LzErr;
+use crate::get::Getable;
+
 use std::env;
-use get::Getable;
 
 
 pub struct EnvGetter();

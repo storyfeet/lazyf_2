@@ -1,10 +1,10 @@
 
-use lz_err::LzErr;
+use crate::lz_err::LzErr;
 use std::str::FromStr;
 use std::path::{PathBuf,Path};
 
 pub trait Getable{
-    fn get(&self,&str)->Option<String>;
+    fn get(&self,_:&str)->Option<String>;
     /// Present exists to make it possible to check if a non key-value flag like "--help" is marked
     fn is_present(&self,s:&str)->bool{
         self.get(s).is_some()
