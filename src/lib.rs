@@ -141,9 +141,10 @@ pub trait Loader:Sized {
     }
 }
 
+//TODO make result return make sense
 pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
     where I:IntoIterator<Item=S>+Debug,
-          S:AsRef<Path>,
+          S:AsRef<str>,
 {
     let mut res = GetHolder::new();
     let fg = FlagGetter();
@@ -151,9 +152,12 @@ pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
     res.add_help(&format!("Config file location flag: \"{}\"\
                        \ndefault locations : {:?}",c_loc_flag,c_locs));
 
+    //TODO add ?
     if let Some(s) = fg.get(c_loc_flag){
-        if let Ok(l) = LzList::load(s){
-            res.add(GetMode::Conf,l);
+        if let Ok(s) = env::replace_env(&s){
+            if let Ok(l) = LzList::load(s){
+                res.add(GetMode::Conf,l);
+            }
         }
     }
 
@@ -163,8 +167,10 @@ pub fn config<I,S>(c_loc_flag:&str,c_locs:I)->GetHolder
 
 
     for fname in c_locs{
-        if let Ok(l) = LzList::load(fname){
-            res.add(GetMode::Conf,l);
+        if let Ok(fname) = env::replace_env(fname.as_ref()){
+            if let Ok(l) = LzList::load(fname){
+                res.add(GetMode::Conf,l);
+            }
         }
     }
     res
