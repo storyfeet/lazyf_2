@@ -1,5 +1,6 @@
 
 use crate::lz_err::LzErr;
+use crate::env;
 use std::str::FromStr;
 use std::path::{PathBuf,Path};
 
@@ -103,7 +104,10 @@ impl GetHolder{
         for (gm,v) in &self.v{
             if *gm != g{continue}
             if let Some(s) = v.get(s){
-                return Some(v.localize(s.as_ref()));
+                return match env::replace_env(&s){
+                    Ok(rp)=>Some(v.localize(rp.as_ref())),
+                    _=>Some(v.localize(s.as_ref())),
+                };
             }
         }
         None
