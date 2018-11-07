@@ -119,7 +119,7 @@ pub use crate::lz_err::LzErr;
 pub use crate::flag::FlagGetter;
 pub use crate::lz_list::{LzList,Lz};
 pub use crate::env::EnvGetter;
-pub use crate::loader::{load_local};
+pub use crate::loader::{load_local,Loader};
 
 use std::fmt::Debug;
 
