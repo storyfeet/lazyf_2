@@ -33,6 +33,7 @@ impl Lz{
     }
 }
 
+#[derive(Debug,Clone)]
 pub struct LzList {
     pub items:Vec<Lz>,
 }
