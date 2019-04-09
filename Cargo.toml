@@ -7,4 +7,13 @@ description = "A quick unified way to grab configuration options from * environm
 keywords = ["conf","config","lazy","simple","lazyf"]
 license = "MIT"
 
+[[bin]]
+name="lz_tools"
+path="src/tools.rs"
+
+[lib]
+name="lazy_conf"
+path="src/lib.rs"
+
 [dependencies]
+clap = "2.33.0"
